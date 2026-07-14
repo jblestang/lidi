@@ -64,7 +64,7 @@ pub fn start<ClientNew, ClientEnd>(
             Ok(mt) => mt,
         };
 
-        let client_id = block.client_id();
+        let client_id = block.client_id()?;
 
         let mut will_end = false;
 

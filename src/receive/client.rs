@@ -43,7 +43,7 @@ where
 
         let block_type = block.block_type()?;
 
-        let payload = block.payload();
+        let payload = block.payload()?;
 
         if !payload.is_empty() {
             log::trace!("client {client_id:x}: payload {} bytes", payload.len());

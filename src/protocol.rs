@@ -38,6 +38,8 @@ use std::{fmt, io, num, sync};
 pub enum Error {
     Io(io::Error),
     InvalidBlockType(Option<u8>),
+    InvalidBlockSize { actual: usize, expected: usize },
+    InvalidPayloadLength { actual: u32, max: usize },
     Other(String),
 }
 
@@ -46,6 +48,12 @@ impl fmt::Display for Error {
         match self {
             Self::Io(e) => write!(fmt, "I/O error: {e}"),
             Self::InvalidBlockType(b) => write!(fmt, "invalid block type: {b:?}"),
+            Self::InvalidBlockSize { actual, expected } => {
+                write!(fmt, "invalid block size: {actual} != {expected}")
+            }
+            Self::InvalidPayloadLength { actual, max } => {
+                write!(fmt, "invalid payload length: {actual} > {max}")
+            }
             Self::Other(e) => write!(fmt, "{e}"),
         }
     }
@@ -274,6 +282,15 @@ impl Block {
                 Ok(Self(content))
             }
             Some(data) => {
+                let max_data_len = Self::max_data_len(raptorq);
+                if data.len() > max_data_len {
+                    return Err(Error::InvalidPayloadLength {
+                        actual: u32::try_from(data.len())
+                            .map_err(|e| Error::Other(format!("data.len(): {e}")))?,
+                        max: max_data_len,
+                    });
+                }
+
                 let mut content = Vec::with_capacity(
                     usize::try_from(raptorq.transfer_length)
                         .map_err(|e| Error::Other(format!("transfer_length: {e}")))?,
@@ -293,9 +310,36 @@ impl Block {
         }
     }
 
-    pub(crate) fn client_id(&self) -> ClientId {
-        let bytes = [self.0[0], self.0[1], self.0[2], self.0[3]];
-        u32::from_le_bytes(bytes)
+    pub(crate) fn validate(&self, raptorq: &RaptorQ) -> Result<(), Error> {
+        let expected_len = usize::try_from(raptorq.transfer_length)
+            .map_err(|e| Error::Other(format!("transfer_length: {e}")))?;
+        if self.0.len() != expected_len {
+            return Err(Error::InvalidBlockSize {
+                actual: self.0.len(),
+                expected: expected_len,
+            });
+        }
+        if self.0.len() < SERIALIZE_OVERHEAD {
+            return Err(Error::Other("block shorter than header".into()));
+        }
+        let payload_len = self.payload_len()?;
+        let max_payload = u32::try_from(Self::max_data_len(raptorq))
+            .map_err(|e| Error::Other(format!("max_data_len: {e}")))?;
+        if payload_len > max_payload {
+            return Err(Error::InvalidPayloadLength {
+                actual: payload_len,
+                max: Self::max_data_len(raptorq),
+            });
+        }
+        Ok(())
+    }
+
+    pub(crate) fn client_id(&self) -> Result<ClientId, Error> {
+        let bytes = self
+            .0
+            .get(0..4)
+            .ok_or_else(|| Error::Other("block shorter than client_id".into()))?;
+        Ok(u32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]))
     }
 
     pub(crate) fn block_type(&self) -> Result<BlockType, Error> {
@@ -309,9 +353,17 @@ impl Block {
         }
     }
 
-    fn payload_len(&self) -> u32 {
-        let data_len_bytes = [self.0[5], self.0[6], self.0[7], self.0[8]];
-        u32::from_le_bytes(data_len_bytes)
+    fn payload_len(&self) -> Result<u32, Error> {
+        let data_len_bytes = self
+            .0
+            .get(5..9)
+            .ok_or_else(|| Error::Other("block shorter than payload length".into()))?;
+        Ok(u32::from_le_bytes([
+            data_len_bytes[0],
+            data_len_bytes[1],
+            data_len_bytes[2],
+            data_len_bytes[3],
+        ]))
     }
 
     pub(crate) const fn deserialize(data: Vec<u8>) -> Self {
@@ -322,9 +374,12 @@ impl Block {
         raptorq.transfer_length as usize - SERIALIZE_OVERHEAD
     }
 
-    pub(crate) fn payload(&self) -> &[u8] {
-        let len = self.payload_len();
-        &self.0[SERIALIZE_OVERHEAD..(SERIALIZE_OVERHEAD + len as usize)]
+    pub(crate) fn payload(&self) -> Result<&[u8], Error> {
+        let len = usize::try_from(self.payload_len()?)
+            .map_err(|e| Error::Other(format!("payload_len: {e}")))?;
+        self.0
+            .get(SERIALIZE_OVERHEAD..SERIALIZE_OVERHEAD.saturating_add(len))
+            .ok_or_else(|| Error::Other("payload out of bounds".into()))
     }
 
     pub(crate) fn serialized(&self) -> &[u8] {
@@ -341,9 +396,9 @@ impl fmt::Display for Block {
         write!(
             fmt,
             "client {:x} block = {} data = {} byte(s)",
-            self.client_id(),
+            self.client_id().unwrap_or(0),
             msg_type,
-            self.payload_len()
+            self.payload_len().unwrap_or(0)
         )
     }
 }
