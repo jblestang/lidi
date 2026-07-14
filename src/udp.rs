@@ -1,4 +1,10 @@
-//! Functions and wrappers over libc's UDP socket multiple messages receive and send
+//! Functions and wrappers over libc's UDP socket multiple messages receive and send.
+//!
+//! # Safety (ANSSI R10)
+//!
+//! This module uses `unsafe` only to call `libc` socket APIs (`recvmsg`, `sendmsg`,
+//! `recvmmsg`, `sendmmsg`). Callers must not rely on this module from safe Rust
+//! without going through the validated wrappers in this file.
 
 use std::{io, mem, net, num, pin, ptr};
 

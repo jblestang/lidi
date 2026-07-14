@@ -1,3 +1,5 @@
+#![deny(clippy::mem_forget)]
+
 use std::{fs, path};
 
 pub mod error;
@@ -7,10 +9,12 @@ pub mod receive;
 pub mod send;
 mod secure_zero;
 // Allow unsafe code to call libc function setsockopt.
+// SAFETY: isolated to validated setsockopt/getsockopt wrappers (ANSSI R10).
 #[allow(unsafe_code)]
 mod sock_utils;
 // Allow unsafe code to initialize C structs and call
 // libc functions recv_mmsg and send_mmsg.
+// SAFETY: confined to the udp module with documented invariants (ANSSI R10).
 #[allow(unsafe_code)]
 mod udp;
 

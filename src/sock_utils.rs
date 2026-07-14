@@ -1,4 +1,8 @@
-//! Bindings and wrappers for socket buffer size libc functions
+//! Bindings and wrappers for socket buffer size libc functions.
+//!
+//! # Safety (ANSSI R10)
+//!
+//! `unsafe` is limited to `libc::setsockopt` / `getsockopt` with validated lengths.
 
 use std::os::fd::AsRawFd;
 use std::{io, mem, ptr};
