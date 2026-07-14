@@ -96,6 +96,25 @@ impl Header {
     }
 }
 
+pub(crate) struct Footer {
+    pub(crate) hash: u128,
+}
+
+impl Footer {
+    pub fn serialize_to<W: Write>(&self, w: &mut W) -> Result<(), Error> {
+        w.write_all(&self.hash.to_le_bytes())?;
+        Ok(())
+    }
+
+    pub fn deserialize_from<R: Read>(r: &mut R) -> Result<Self, Error> {
+        let mut hash = [0u8; 16];
+        r.read_exact(&mut hash)?;
+        let hash = u128::from_le_bytes(hash);
+
+        Ok(Self { hash })
+    }
+}
+
 #[cfg(test)]
 mod repro {
     use super::{Error, Header, MAX_FILE_NAME_LEN};
@@ -128,24 +147,5 @@ mod repro {
             Ok(header) => assert_eq!(header.file_name.len(), MAX_FILE_NAME_LEN),
             Err(error) => panic!("max len should parse: {error}"),
         }
-    }
-}
-
-pub(crate) struct Footer {
-    pub(crate) hash: u128,
-}
-
-impl Footer {
-    pub fn serialize_to<W: Write>(&self, w: &mut W) -> Result<(), Error> {
-        w.write_all(&self.hash.to_le_bytes())?;
-        Ok(())
-    }
-
-    pub fn deserialize_from<R: Read>(r: &mut R) -> Result<Self, Error> {
-        let mut hash = [0u8; 16];
-        r.read_exact(&mut hash)?;
-        let hash = u128::from_le_bytes(hash);
-
-        Ok(Self { hash })
     }
 }

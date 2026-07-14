@@ -377,7 +377,7 @@ mod repro {
             tx.send(()).expect("queue not full yet");
         }
         assert!(
-            matches!(tx.try_send(()), Err(TrySendError::Full(_))),
+            matches!(tx.try_send(()), Err(TrySendError::Full(()))),
             "bounded queue must reject excess items"
         );
     }

@@ -14,8 +14,11 @@ env:
 jobs:
   outdated:
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - run: cargo install cargo-outdated --locked
-      - run: cargo outdated --workspace --exit-code 1
+      - name: Report outdated dependencies
+        run: cargo outdated --workspace
+      - name: Fail if outdated (scheduled runs only)
+        if: github.event_name == 'schedule'
+        run: cargo outdated --workspace --exit-code 1

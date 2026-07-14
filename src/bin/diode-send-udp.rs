@@ -40,13 +40,12 @@ struct Args {
 }
 
 fn resolve_diode_send(clients: &Clients) -> Option<aux::DiodeSend> {
-    if let Some(to_tcp) = clients.to_tcp {
-        Some(aux::DiodeSend::Tcp(to_tcp))
-    } else if let Some(to_unix) = clients.to_unix.as_ref() {
-        Some(aux::DiodeSend::Unix(to_unix.clone()))
-    } else {
-        None
-    }
+    clients.to_tcp.map(aux::DiodeSend::Tcp).or_else(|| {
+        clients
+            .to_unix
+            .as_ref()
+            .map(|to_unix| aux::DiodeSend::Unix(to_unix.clone()))
+    })
 }
 
 fn main() {
@@ -63,9 +62,7 @@ fn main() {
         env!("CARGO_PKG_VERSION")
     );
 
-    let diode = if let Some(diode) = resolve_diode_send(&args.to) {
-        diode
-    } else {
+    let Some(diode) = resolve_diode_send(&args.to) else {
         log::error!("missing TCP or Unix destination");
         return;
     };

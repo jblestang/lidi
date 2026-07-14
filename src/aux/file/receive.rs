@@ -301,9 +301,8 @@ mod repro {
         };
 
         let (done_tx, done_rx) = mpsc::channel();
-        let output_for_receiver = output_dir.clone();
         let receiver = thread::spawn(move || {
-            let result = file::receive::receive_files(&config, &output_for_receiver);
+            let result = file::receive::receive_files(&config, &output_dir);
             let _ = done_tx.send(result);
         });
 

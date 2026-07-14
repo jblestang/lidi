@@ -32,7 +32,7 @@ fasthash = { version = "0", default-features = false, features = [
 ] }
 libc = { version = "0", default-features = false, features = ["std"] }
 log = { version = "0", default-features = false, features = ["std"] }
-rand = { version = "0", default-features = false, features = [
+rand = { version = "0.10", default-features = false, features = [
     "std",
     "std_rng",
     "thread_rng",

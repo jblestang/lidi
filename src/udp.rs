@@ -9,7 +9,7 @@
 use std::{io, mem, net, num, pin, ptr};
 
 /// Initialize a libc struct to zero via `MaybeUninit` (ANSSI R22).
-fn zeroed_libc<T>() -> T {
+const fn zeroed_libc<T>() -> T {
     // SAFETY: `iovec`, `msghdr`, and `mmsghdr` are valid when zero-filled before use.
     unsafe { mem::MaybeUninit::<T>::zeroed().assume_init() }
 }

@@ -65,7 +65,7 @@ where
                 log::warn!("client {client_id:x}: aborting transfer");
                 (receiver.client_end)(
                     client.into_inner().map_err(|e| {
-                        receive::Error::Other(format!("failed to retrieve client inner: {e}",))
+                        receive::Error::Other(format!("failed to retrieve client inner: {e}"))
                     })?,
                     false,
                 );
@@ -85,7 +85,7 @@ where
                 client.flush()?;
                 (receiver.client_end)(
                     client.into_inner().map_err(|e| {
-                        receive::Error::Other(format!("failed to retrieve client inner: {e}",))
+                        receive::Error::Other(format!("failed to retrieve client inner: {e}"))
                     })?,
                     true,
                 );

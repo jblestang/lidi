@@ -2,6 +2,6 @@
 
 use zeroize::Zeroize;
 
-pub(crate) fn zeroize_vec(buffer: &mut Vec<u8>) {
+pub fn zeroize_vec(buffer: &mut Vec<u8>) {
     buffer.zeroize();
 }

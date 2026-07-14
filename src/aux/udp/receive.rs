@@ -130,7 +130,7 @@ mod repro {
         const BUFFER_SIZE: usize = 1024;
         let buffer = vec![0u8; BUFFER_SIZE];
         let panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            let _ = &buffer[0..BUFFER_SIZE + 1];
+            let _ = &buffer[0..=BUFFER_SIZE];
         }));
         assert!(
             panic.is_err(),
@@ -194,7 +194,7 @@ mod repro {
                 );
             }
             Ok(Ok(_)) => panic!("expected invalid datagram size error"),
-            Err(_) => panic!("worker timed out"),
+            Err(error) => panic!("worker timed out: {error}"),
         }
         worker.join().expect("worker must not panic");
     }
