@@ -1,0 +1,21 @@
+name: Dependency freshness
+
+on:
+  push:
+    branches: [ master, dev ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron: "0 6 * * 1"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  outdated:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo install cargo-outdated --locked
+      - run: cargo outdated --workspace --exit-code 1
