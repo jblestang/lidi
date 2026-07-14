@@ -26,7 +26,7 @@ where
     let mut client =
         io::BufWriter::with_capacity(protocol::Block::max_data_len(&receiver.raptorq), client);
 
-    let mut transmitted = 0;
+    let mut transmitted: usize = 0;
 
     let mut hasher = if receiver.config.hash {
         Some(fasthash::SpookyHasherExt::default())
@@ -52,7 +52,7 @@ where
                 hasher.write(payload);
             }
 
-            transmitted += payload.len();
+            transmitted = transmitted.saturating_add(payload.len());
 
             client.write_all(payload)?;
             if receiver.config.flush {

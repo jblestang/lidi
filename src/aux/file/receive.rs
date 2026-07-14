@@ -224,7 +224,7 @@ where
                 return Ok(received);
             }
             nread => {
-                remaining -= nread;
+                remaining = remaining.saturating_sub(nread);
                 if (cursor + nread) < config.buffer_size {
                     cursor += nread;
                     continue;

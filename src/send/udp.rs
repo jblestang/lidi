@@ -41,7 +41,7 @@ pub fn start<C>(sender: &send::Sender<C>) -> Result<(), send::Error> {
                 match sender.for_send.recv()? {
                     Some(packets) => udp.send(packets)?,
                     None => {
-                        count -= 1;
+                        count = count.saturating_sub(1);
                     }
                 }
             }

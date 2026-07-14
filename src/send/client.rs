@@ -23,7 +23,7 @@ where
 
     let mut buffer = vec![0; protocol::Block::max_data_len(&sender.raptorq)];
     let mut cursor = 0;
-    let mut transmitted = 0;
+    let mut transmitted: usize = 0;
 
     let mut hasher = if sender.config.hash {
         Some(fasthash::SpookyHasherExt::default())
@@ -64,7 +64,7 @@ where
             Some(&buffer[..cursor]),
         )?))?;
 
-        transmitted += cursor;
+        transmitted = transmitted.saturating_add(cursor);
         cursor = 0;
 
         if 0 == read {
