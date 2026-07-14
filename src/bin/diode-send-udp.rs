@@ -58,7 +58,8 @@ fn main() {
     } else if let Some(to_unix) = args.to.to_unix {
         aux::DiodeSend::Unix(to_unix)
     } else {
-        unreachable!()
+        log::error!("missing TCP or Unix destination");
+        return;
     };
 
     let config = aux::udp::Config {

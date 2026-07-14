@@ -258,18 +258,24 @@ fn main() {
     thread::scope(|scope| {
         let lsender = sender.clone();
         if let Some(tcp_listener) = tcp_listener {
-            thread::Builder::new()
+            if let Err(e) = thread::Builder::new()
                 .name("tcp_server".into())
                 .spawn_scoped(scope, move || tcp_listener_loop(&tcp_listener, &lsender))
-                .expect("thread spawn");
+            {
+                log::error!("failed to spawn tcp_server thread: {e}");
+                return;
+            }
         }
 
         let lsender = sender.clone();
         if let Some(unix_listener) = unix_listener {
-            thread::Builder::new()
+            if let Err(e) = thread::Builder::new()
                 .name("unix_server".into())
                 .spawn_scoped(scope, move || unix_listener_loop(&unix_listener, &lsender))
-                .expect("thread spawn");
+            {
+                log::error!("failed to spawn unix_server thread: {e}");
+                return;
+            }
         }
 
         if let Err(e) = sender.start(scope) {

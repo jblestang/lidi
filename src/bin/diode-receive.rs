@@ -172,7 +172,10 @@ impl TryFrom<&Clients> for Client {
             let client = unix::net::UnixStream::connect(to_unix)?;
             Ok(Self::Unix(client))
         } else {
-            unreachable!()
+            Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "missing TCP or Unix destination",
+            ))
         }
     }
 }
