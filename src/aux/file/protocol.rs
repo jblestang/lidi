@@ -4,6 +4,7 @@ use std::{
     string::FromUtf8Error,
 };
 
+#[derive(Debug)]
 pub enum Error {
     Io(io::Error),
     StringFormatError(FromUtf8Error),
@@ -18,6 +19,16 @@ impl fmt::Display for Error {
             Self::StringFormatError(e) => write!(fmt, "string format error: {e}"),
             Self::InvalidFileSize(s1, s2) => write!(fmt, "invalid file size: {s1} != {s2}"),
             Self::InvalidHash(h1, h2) => write!(fmt, "invalid hash: {h1:x} != {h2:x}"),
+        }
+    }
+}
+
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Io(e) => Some(e),
+            Self::StringFormatError(e) => Some(e),
+            Self::InvalidFileSize(_, _) | Self::InvalidHash(_, _) => None,
         }
     }
 }

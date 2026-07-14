@@ -46,6 +46,7 @@ pub struct Config {
     pub hash: bool,
 }
 
+#[derive(Debug)]
 pub enum Error {
     Io(io::Error),
     SendPackets,
@@ -70,6 +71,22 @@ impl fmt::Display for Error {
             Self::ReceiveTimeout(e) => write!(fmt, "crossbeam receive timeout error: {e}"),
             Self::Protocol(e) => write!(fmt, "diode protocol error: {e}"),
             Self::Other(e) => write!(fmt, "{e}"),
+        }
+    }
+}
+
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Io(e) => Some(e),
+            Self::SendPackets
+            | Self::SendBlockPackets
+            | Self::SendBlock
+            | Self::SendClients
+            | Self::Other(_) => None,
+            Self::Receive(e) => Some(e),
+            Self::ReceiveTimeout(e) => Some(e),
+            Self::Protocol(e) => Some(e),
         }
     }
 }

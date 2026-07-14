@@ -1,5 +1,6 @@
 use std::{fs, path};
 
+pub mod error;
 pub mod aux;
 pub mod protocol;
 pub mod receive;

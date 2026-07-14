@@ -10,6 +10,7 @@ pub struct Config<D> {
     pub buffer_size: usize,
 }
 
+#[derive(Debug)]
 pub enum Error {
     Io(io::Error),
     Diode(protocol::Error),
@@ -22,6 +23,16 @@ impl fmt::Display for Error {
             Self::Io(e) => write!(fmt, "I/O error: {e}"),
             Self::Diode(e) => write!(fmt, "diode error: {e}"),
             Self::Other(e) => write!(fmt, "error: {e}"),
+        }
+    }
+}
+
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Io(e) => Some(e),
+            Self::Diode(e) => Some(e),
+            Self::Other(_) => None,
         }
     }
 }

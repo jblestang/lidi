@@ -35,6 +35,7 @@
 
 use std::{fmt, io, num, sync};
 
+#[derive(Debug)]
 pub enum Error {
     Io(io::Error),
     InvalidBlockType(Option<u8>),
@@ -47,6 +48,15 @@ impl fmt::Display for Error {
             Self::Io(e) => write!(fmt, "I/O error: {e}"),
             Self::InvalidBlockType(b) => write!(fmt, "invalid block type: {b:?}"),
             Self::Other(e) => write!(fmt, "{e}"),
+        }
+    }
+}
+
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Io(e) => Some(e),
+            Self::InvalidBlockType(_) | Self::Other(_) => None,
         }
     }
 }
