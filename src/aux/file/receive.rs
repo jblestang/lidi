@@ -203,6 +203,7 @@ where
                 if remaining != 0 {
                     log::debug!("expected file size = {}", header.file_length);
                     log::debug!("received file size = {received}");
+                    crate::secure_zero::zeroize_vec(&mut buffer);
                     return Err(file::Error::Diode(file::protocol::Error::InvalidFileSize(
                         usize::try_from(header.file_length)?,
                         received,
@@ -214,6 +215,7 @@ where
                     log::debug!("expected hash = {}", footer.hash);
                     log::debug!("computed hash = {hash}");
                     if footer.hash != hash {
+                        crate::secure_zero::zeroize_vec(&mut buffer);
                         return Err(file::Error::Diode(file::protocol::Error::InvalidHash(
                             hash,
                             footer.hash,
@@ -221,6 +223,7 @@ where
                     }
                 }
 
+                crate::secure_zero::zeroize_vec(&mut buffer);
                 return Ok(received);
             }
             nread => {

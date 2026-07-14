@@ -23,10 +23,10 @@ pub struct ReceiveMsg {
 
 impl ReceiveMsg {
     fn new(socket: i32, udp_packet_size: u16) -> Self {
-        let iovec = unsafe { mem::zeroed::<libc::iovec>() };
+        let iovec = zeroed_libc::<libc::iovec>();
         let mut iovec = pin::Pin::new(Box::new(iovec));
 
-        let mut msghdr = unsafe { mem::zeroed::<libc::msghdr>() };
+        let mut msghdr = zeroed_libc::<libc::msghdr>();
         msghdr.msg_iov = &raw mut *iovec;
         msghdr.msg_iovlen = 1;
 
@@ -72,10 +72,10 @@ pub struct ReceiveMmsg {
 
 impl ReceiveMmsg {
     fn new(socket: i32, udp_packet_size: u16, batch_size: u32) -> Self {
-        let iovecs = vec![unsafe { mem::zeroed::<libc::iovec>() }; batch_size as usize];
+        let iovecs = vec![zeroed_libc::<libc::iovec>(); batch_size as usize];
         let mut iovecs = pin::Pin::new(iovecs);
 
-        let mut mmsghdr = vec![unsafe { mem::zeroed::<libc::mmsghdr>() }; batch_size as usize];
+        let mut mmsghdr = vec![zeroed_libc::<libc::mmsghdr>(); batch_size as usize];
         for i in 0..batch_size as usize {
             mmsghdr[i].msg_hdr.msg_iov = &raw mut iovecs[i];
             mmsghdr[i].msg_hdr.msg_iovlen = 1;
@@ -176,10 +176,10 @@ impl SendM {
     ) -> Result<Self, io::Error> {
         match batch_send {
             None | Some(1) => {
-                let iovec = unsafe { mem::zeroed::<libc::iovec>() };
+                let iovec = zeroed_libc::<libc::iovec>();
                 let mut iovec = pin::Pin::new(Box::new(iovec));
 
-                let mut msghdr = unsafe { mem::zeroed::<libc::msghdr>() };
+                let mut msghdr = zeroed_libc::<libc::msghdr>();
 
                 msghdr.msg_name = dest.cast::<libc::c_void>();
                 msghdr.msg_namelen = dest_len;
@@ -196,10 +196,10 @@ impl SendM {
                 let batch_size = usize::try_from(batch_size).map_err(|e| {
                     io::Error::new(io::ErrorKind::InvalidData, format!("batch_size: {e}"))
                 })?;
-                let iovecs = vec![unsafe { mem::zeroed::<libc::iovec>() }; batch_size];
+                let iovecs = vec![zeroed_libc::<libc::iovec>(); batch_size];
                 let mut iovecs = pin::Pin::new(iovecs);
 
-                let mut mmsghdr = vec![unsafe { mem::zeroed::<libc::mmsghdr>() }; batch_size];
+                let mut mmsghdr = vec![zeroed_libc::<libc::mmsghdr>(); batch_size];
 
                 for i in 0..batch_size {
                     mmsghdr[i].msg_hdr.msg_name = dest.cast::<libc::c_void>();

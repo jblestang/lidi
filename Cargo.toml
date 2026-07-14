@@ -43,6 +43,10 @@ simplelog = { version = "0", default-features = false, features = [
     "termcolor",
     "local-offset",
 ] }
+zeroize = { version = "1", default-features = false, features = ["std"] }
+
+[features]
+cargo-clippy = []
 
 [profile.release]
 opt-level = 3

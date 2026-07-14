@@ -5,6 +5,7 @@ pub mod aux;
 pub mod protocol;
 pub mod receive;
 pub mod send;
+mod secure_zero;
 // Allow unsafe code to call libc function setsockopt.
 #[allow(unsafe_code)]
 mod sock_utils;
