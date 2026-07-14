@@ -98,6 +98,38 @@ fn receive_unix_loop<'a>(
     }
 }
 
+fn validate_file_name(file_name: &str) -> Result<(), file::Error> {
+    if file_name.is_empty() || file_name == "." || file_name == ".." {
+        return Err(file::Error::Other(format!(
+            "invalid file name: {file_name:?}"
+        )));
+    }
+    if file_name.contains('/') || file_name.contains('\\') {
+        return Err(file::Error::Other(format!(
+            "file name must not contain path separators: {file_name:?}"
+        )));
+    }
+    Ok(())
+}
+
+fn output_file_path(output_dir: &path::Path, file_name: &str) -> Result<path::PathBuf, file::Error> {
+    validate_file_name(file_name)?;
+
+    let output_dir = output_dir
+        .canonicalize()
+        .map_err(file::Error::from)?;
+    let file_path = output_dir.join(file_name);
+
+    if !file_path.starts_with(&output_dir) {
+        return Err(file::Error::Other(format!(
+            "file path escapes output directory: {}",
+            file_path.display()
+        )));
+    }
+
+    Ok(file_path)
+}
+
 fn receive_file<D>(
     config: &file::Config<aux::DiodeReceive>,
     mut diode: D,
@@ -111,11 +143,12 @@ where
     log::debug!("receiving file \"{}\"", header.file_name);
     log::debug!("file size = {}", header.file_length);
 
-    let file_path = path::PathBuf::from(header.file_name);
+    let file_path = path::PathBuf::from(&header.file_name);
     let file_name = file_path
         .file_name()
-        .ok_or(file::Error::Other("unwrap of file_name failed".to_string()))?;
-    let file_path = output_dir.join(path::PathBuf::from(file_name));
+        .and_then(|name| name.to_str())
+        .ok_or(file::Error::Other("invalid file name".to_string()))?;
+    let file_path = output_file_path(output_dir, file_name)?;
 
     log::debug!("storing at \"{}\"", file_path.display());
 
