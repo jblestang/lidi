@@ -1,6 +1,5 @@
 [target.'cfg(feature = "cargo-clippy")']
 rustflags = [
-  "-Dunsafe_code",
   "-Wclippy::all",
   "-Wclippy::exit",
   "-Wclippy::fallible_impl_from",

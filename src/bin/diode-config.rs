@@ -2,7 +2,7 @@ use std::process;
 
 use clap::Parser;
 use diode::protocol;
-use rand::Rng;
+use rand::RngExt;
 
 #[derive(clap::Parser)]
 #[clap(about = "Test diode config parameters.")]
@@ -98,7 +98,7 @@ fn main() {
 
     /* encoding */
     let mut packets = raptorq.encode(id, &data);
-    log::info!("{} packets encoded", packets.len(),);
+    log::info!("{} packets encoded", packets.len());
     log::debug!("len(packet) = {}", packets[0].serialize().len());
 
     /* shuffling */

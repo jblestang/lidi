@@ -6,9 +6,27 @@ license = "GPL-3.0"
 
 [workspace]
 members = [".", "diode-file-bindings"]
+resolver = "3"
+
+# Third-party dependencies are declared once with default-features disabled.
+# Each crate opts in to the features it needs via [dependencies] below.
+[workspace.dependencies]
+clap = { version = "4", default-features = false }
+core_affinity = { version = "0", default-features = false }
+crossbeam-channel = { version = "0", default-features = false }
+crossbeam-utils = { version = "0", default-features = false }
+fasthash = { version = "0", default-features = false }
+libc = { version = "0", default-features = false }
+log = { version = "0", default-features = false }
+rand = { version = "0.10", default-features = false }
+raptorq = { version = "2", default-features = false }
+semka = { version = "2", default-features = false }
+simplelog = { version = "0", default-features = false }
+tempfile = { version = "3", default-features = false }
+zeroize = { version = "1", default-features = false }
 
 [dependencies]
-clap = { version = "4", default-features = false, features = [
+clap = { workspace = true, features = [
     "color",
     "derive",
     "error-context",
@@ -17,32 +35,36 @@ clap = { version = "4", default-features = false, features = [
     "suggestions",
     "usage",
 ] }
-core_affinity = { version = "0", default-features = false }
-crossbeam-channel = { version = "0", default-features = false, features = [
-    "std",
-] }
-crossbeam-utils = { version = "0", default-features = false, features = [
-    "std",
-] }
-fasthash = { version = "0", default-features = false, features = [
+core_affinity = { workspace = true }
+crossbeam-channel = { workspace = true, features = ["std"] }
+crossbeam-utils = { workspace = true, features = ["std"] }
+fasthash = { workspace = true, features = [
     "sse42",
     "aes",
     "avx",
     "avx2",
 ] }
-libc = { version = "0", default-features = false, features = ["std"] }
-log = { version = "0", default-features = false, features = ["std"] }
-rand = { version = "0", default-features = false, features = [
+libc = { workspace = true, features = ["std"] }
+log = { workspace = true, features = ["std"] }
+rand = { workspace = true, features = [
     "std",
     "std_rng",
     "thread_rng",
 ] }
-raptorq = { version = "2", default-features = false, features = ["std"] }
-semka = { version = "2", default-features = false, features = [] }
-simplelog = { version = "0", default-features = false, features = [
+raptorq = { workspace = true, features = ["std"] }
+semka = { workspace = true }
+simplelog = { workspace = true, features = [
     "termcolor",
     "local-offset",
 ] }
+zeroize = { workspace = true, features = ["std"] }
+
+[dev-dependencies]
+tempfile = { workspace = true, features = ["getrandom"] }
+
+[features]
+default = []
+cargo-clippy = []
 
 [profile.release]
 opt-level = 3

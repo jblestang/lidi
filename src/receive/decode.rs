@@ -19,6 +19,13 @@ pub fn start<ClientNew, ClientEnd>(
                     Some(block) => {
                         log::debug!("block {id} decoded with {} bytes!", block.len());
 
+                        let block = protocol::Block::deserialize(block);
+                        if let Err(e) = block.validate(&receiver.raptorq) {
+                            log::error!("invalid decoded block {id}: {e}");
+                            receiver.to_dispatch.send(None)?;
+                            continue;
+                        }
+
                         let mut block_to_dispatch =
                             receiver.block_to_dispatch.0.lock().map_err(|e| {
                                 receive::Error::Other(format!(
@@ -38,9 +45,7 @@ pub fn start<ClientNew, ClientEnd>(
                                 ))
                             })?;
 
-                        receiver
-                            .to_dispatch
-                            .send(Some(protocol::Block::deserialize(block)))?;
+                        receiver.to_dispatch.send(Some(block))?;
 
                         *block_to_dispatch = block_to_dispatch.wrapping_add(1);
                         drop(block_to_dispatch);

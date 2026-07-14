@@ -1,5 +1,5 @@
 use clap::Parser;
-use rand::RngCore;
+use rand::Rng;
 use std::{io::Write, net, os::unix, path};
 
 #[derive(clap::Args)]
@@ -56,14 +56,18 @@ fn main() {
 
     if let Some(to_tcp) = args.to.to_tcp {
         log::debug!("TCP connect to {to_tcp}");
-        let diode = net::TcpStream::connect(to_tcp).expect("TCP connect");
-        start(diode, args.buffer_size);
+        match net::TcpStream::connect(to_tcp) {
+            Ok(diode) => start(diode, args.buffer_size),
+            Err(e) => log::error!("TCP connect failed: {e}"),
+        }
     } else if let Some(to_unix) = args.to.to_unix {
         log::debug!("Unix connect to {}", to_unix.display());
-        let diode = unix::net::UnixStream::connect(to_unix).expect("Unix connect");
-        start(diode, args.buffer_size);
+        match unix::net::UnixStream::connect(to_unix) {
+            Ok(diode) => start(diode, args.buffer_size),
+            Err(e) => log::error!("Unix connect failed: {e}"),
+        }
     } else {
-        unreachable!();
+        log::error!("missing TCP or Unix destination");
     }
 }
 
@@ -81,6 +85,9 @@ where
             *n ^= rnd;
         }
         log::debug!("sending buffer of {buffer_size} bytes");
-        diode.write_all(&buffer).expect("write");
+        if let Err(e) = diode.write_all(&buffer) {
+            log::error!("write failed: {e}");
+            return;
+        }
     }
 }

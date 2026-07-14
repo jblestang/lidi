@@ -64,7 +64,7 @@ pub fn start<ClientNew, ClientEnd>(
             Ok(mt) => mt,
         };
 
-        let client_id = block.client_id();
+        let client_id = block.client_id()?;
 
         let mut will_end = false;
 
@@ -76,7 +76,7 @@ pub fn start<ClientNew, ClientEnd>(
             }
             protocol::BlockType::Start => {
                 let (client_sendq, client_recvq) =
-                    crossbeam_channel::unbounded::<protocol::Block>();
+                    crossbeam_channel::bounded(super::PIPELINE_QUEUE_DEPTH);
                 active_transfers.insert(client_id, client_sendq);
                 receiver.to_clients.send((client_id, client_recvq))?;
             }

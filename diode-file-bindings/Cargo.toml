@@ -5,7 +5,7 @@ edition = "2024"
 license = "GPL-3.0"
 
 [dependencies]
-diode = { path = ".." }
+diode = { path = "..", default-features = false }
 
 [lib]
 crate-type = ["dylib"]

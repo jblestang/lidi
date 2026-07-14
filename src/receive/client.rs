@@ -26,7 +26,7 @@ where
     let mut client =
         io::BufWriter::with_capacity(protocol::Block::max_data_len(&receiver.raptorq), client);
 
-    let mut transmitted = 0;
+    let mut transmitted: usize = 0;
 
     let mut hasher = if receiver.config.hash {
         Some(fasthash::SpookyHasherExt::default())
@@ -43,7 +43,7 @@ where
 
         let block_type = block.block_type()?;
 
-        let payload = block.payload();
+        let payload = block.payload()?;
 
         if !payload.is_empty() {
             log::trace!("client {client_id:x}: payload {} bytes", payload.len());
@@ -52,7 +52,7 @@ where
                 hasher.write(payload);
             }
 
-            transmitted += payload.len();
+            transmitted = transmitted.saturating_add(payload.len());
 
             client.write_all(payload)?;
             if receiver.config.flush {
@@ -65,7 +65,7 @@ where
                 log::warn!("client {client_id:x}: aborting transfer");
                 (receiver.client_end)(
                     client.into_inner().map_err(|e| {
-                        receive::Error::Other(format!("failed to retrieve client inner: {e}",))
+                        receive::Error::Other(format!("failed to retrieve client inner: {e}"))
                     })?,
                     false,
                 );
@@ -85,7 +85,7 @@ where
                 client.flush()?;
                 (receiver.client_end)(
                     client.into_inner().map_err(|e| {
-                        receive::Error::Other(format!("failed to retrieve client inner: {e}",))
+                        receive::Error::Other(format!("failed to retrieve client inner: {e}"))
                     })?,
                     true,
                 );

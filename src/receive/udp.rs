@@ -23,7 +23,7 @@ pub fn start<ClientNew, ClientEnd>(
     let sock_buffer_size = sock_utils::get_socket_recv_buffer_size(&socket)?;
     log::info!("UDP socket receive buffer size set to {sock_buffer_size}");
 
-    if (sock_buffer_size as i32) < buffer_size {
+    if sock_buffer_size < buffer_size {
         log::warn!(
             "UDP socket recv buffer may be too small ({sock_buffer_size} < {buffer_size}) to achieve optimal performances"
         );

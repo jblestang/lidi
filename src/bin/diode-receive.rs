@@ -172,7 +172,10 @@ impl TryFrom<&Clients> for Client {
             let client = unix::net::UnixStream::connect(to_unix)?;
             Ok(Self::Unix(client))
         } else {
-            unreachable!()
+            Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "missing TCP or Unix destination",
+            ))
         }
     }
 }
@@ -230,4 +233,22 @@ fn main() {
             log::error!("failed to start diode receiver: {e}");
         }
     });
+}
+
+#[cfg(test)]
+mod repro {
+    use super::*;
+
+    #[test]
+    fn repro_missing_client_destination_returns_error_not_unreachable() {
+        let clients = Clients {
+            to_tcp: None,
+            to_unix: None,
+        };
+        match Client::try_from(&clients) {
+            Err(error) if error.kind() == io::ErrorKind::InvalidInput => {}
+            Err(error) => panic!("expected InvalidInput, got {error}"),
+            Ok(_) => panic!("expected error for empty Clients"),
+        }
+    }
 }

@@ -48,6 +48,7 @@ pub struct Config {
     pub hash: bool,
 }
 
+#[derive(Debug)]
 pub enum Error {
     Io(io::Error),
     SendBlock,
@@ -68,6 +69,17 @@ impl fmt::Display for Error {
             Self::Protocol(e) => write!(fmt, "diode protocol error: {e}"),
             Self::Diode(e) => write!(fmt, "diode error: {e}"),
             Self::Other(e) => write!(fmt, "{e}"),
+        }
+    }
+}
+
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Io(e) => Some(e),
+            Self::SendBlock | Self::SendUdp | Self::Diode(_) | Self::Other(_) => None,
+            Self::Receive(e) => Some(e),
+            Self::Protocol(e) => Some(e),
         }
     }
 }

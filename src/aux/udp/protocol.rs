@@ -3,6 +3,7 @@ use std::{
     io::{Read, Write},
 };
 
+#[derive(Debug)]
 pub enum Error {
     Io(io::Error),
 }
@@ -11,6 +12,14 @@ impl fmt::Display for Error {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         match self {
             Self::Io(e) => write!(fmt, "I/O error: {e}"),
+        }
+    }
+}
+
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Io(e) => Some(e),
         }
     }
 }
