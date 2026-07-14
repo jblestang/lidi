@@ -211,10 +211,10 @@ where
         let (to_reblock, for_reblock) = crossbeam_channel::bounded(PIPELINE_QUEUE_DEPTH);
         let (to_decode, for_decode) = crossbeam_channel::bounded(PIPELINE_QUEUE_DEPTH);
         let (to_dispatch, for_dispatch) = crossbeam_channel::bounded(PIPELINE_QUEUE_DEPTH);
-        let (to_clients, for_clients) =
-            crossbeam_channel::bounded(usize::try_from(config.max_clients).map_err(|e| {
-                Error::Other(format!("max_clients: {e}"))
-            })?);
+        let (to_clients, for_clients) = crossbeam_channel::bounded(
+            usize::try_from(config.max_clients)
+                .map_err(|e| Error::Other(format!("max_clients: {e}")))?,
+        );
 
         Ok(Self {
             config,

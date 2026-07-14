@@ -45,9 +45,7 @@ pub fn start<ClientNew, ClientEnd>(
                                 ))
                             })?;
 
-                        receiver
-                            .to_dispatch
-                            .send(Some(block))?;
+                        receiver.to_dispatch.send(Some(block))?;
 
                         *block_to_dispatch = block_to_dispatch.wrapping_add(1);
                         drop(block_to_dispatch);

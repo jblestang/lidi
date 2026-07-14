@@ -132,7 +132,10 @@ mod repro {
         let panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             let _ = &buffer[0..BUFFER_SIZE + 1];
         }));
-        assert!(panic.is_err(), "oversized slice must panic on unpatched path");
+        assert!(
+            panic.is_err(),
+            "oversized slice must panic on unpatched path"
+        );
     }
 
     #[test]

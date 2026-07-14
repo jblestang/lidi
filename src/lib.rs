@@ -2,12 +2,12 @@
 
 use std::{fs, path};
 
-pub mod error;
 pub mod aux;
+pub mod error;
 pub mod protocol;
 pub mod receive;
-pub mod send;
 mod secure_zero;
+pub mod send;
 // Allow unsafe code to call libc function setsockopt.
 // SAFETY: isolated to validated setsockopt/getsockopt wrappers (ANSSI R10).
 #[allow(unsafe_code)]

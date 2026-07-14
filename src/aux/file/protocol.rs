@@ -34,9 +34,9 @@ impl std::error::Error for Error {
         match self {
             Self::Io(e) => Some(e),
             Self::StringFormatError(e) => Some(e),
-            Self::InvalidFileSize(_, _)
-            | Self::InvalidHash(_, _)
-            | Self::InvalidFileNameLen(_) => None,
+            Self::InvalidFileSize(_, _) | Self::InvalidHash(_, _) | Self::InvalidFileNameLen(_) => {
+                None
+            }
         }
     }
 }

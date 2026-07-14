@@ -77,10 +77,7 @@ impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::Io(e) => Some(e),
-            Self::SendBlock
-            | Self::SendUdp
-            | Self::Diode(_)
-            | Self::Other(_) => None,
+            Self::SendBlock | Self::SendUdp | Self::Diode(_) | Self::Other(_) => None,
             Self::Receive(e) => Some(e),
             Self::Protocol(e) => Some(e),
         }

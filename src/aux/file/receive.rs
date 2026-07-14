@@ -112,12 +112,13 @@ fn validate_file_name(file_name: &str) -> Result<(), file::Error> {
     Ok(())
 }
 
-fn output_file_path(output_dir: &path::Path, file_name: &str) -> Result<path::PathBuf, file::Error> {
+fn output_file_path(
+    output_dir: &path::Path,
+    file_name: &str,
+) -> Result<path::PathBuf, file::Error> {
     validate_file_name(file_name)?;
 
-    let output_dir = output_dir
-        .canonicalize()
-        .map_err(file::Error::from)?;
+    let output_dir = output_dir.canonicalize().map_err(file::Error::from)?;
     let file_path = output_dir.join(file_name);
 
     if !file_path.starts_with(&output_dir) {
@@ -328,7 +329,9 @@ mod repro {
         assert!(
             receive_result.is_ok(),
             "receive_files failed: {}",
-            receive_result.err().map_or_else(String::new, |e| e.to_string())
+            receive_result
+                .err()
+                .map_or_else(String::new, |e| e.to_string())
         );
         receiver.join().expect("receiver thread panicked");
 

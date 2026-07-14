@@ -418,7 +418,7 @@ impl fmt::Display for Block {
 
 #[cfg(test)]
 mod repro {
-    use super::{Block, Error, RaptorQ, ID_START};
+    use super::{Block, Error, ID_START, RaptorQ};
 
     fn test_raptorq() -> RaptorQ {
         match RaptorQ::new(1500, 65_536, 10, 5) {
@@ -444,7 +444,10 @@ mod repro {
         let panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             let _ = &vec![0u8; block_len][9..end];
         }));
-        assert!(panic.is_err(), "forged payload length must panic on unpatched slice");
+        assert!(
+            panic.is_err(),
+            "forged payload length must panic on unpatched slice"
+        );
     }
 
     #[test]
