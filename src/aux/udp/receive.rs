@@ -28,6 +28,13 @@ where
             header.size
         );
 
+        if header.size == 0 || header.size > config.buffer_size {
+            return Err(udp::Error::Other(format!(
+                "invalid datagram size {} (buffer size is {})",
+                header.size, config.buffer_size
+            )));
+        }
+
         diode.read_exact(&mut buffer[0..header.size])?;
 
         log::trace!("sending datagram to {to_udp}");
