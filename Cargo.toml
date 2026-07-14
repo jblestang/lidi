@@ -45,6 +45,9 @@ simplelog = { version = "0", default-features = false, features = [
 ] }
 zeroize = { version = "1", default-features = false, features = ["std"] }
 
+[dev-dependencies]
+tempfile = "3"
+
 [features]
 cargo-clippy = []
 
