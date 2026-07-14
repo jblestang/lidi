@@ -117,3 +117,50 @@ pub unsafe extern "C" fn diode_receive_files(
         Err(_) => 0,
     }
 }
+
+#[cfg(test)]
+mod repro {
+    use super::*;
+    use std::ffi::CString;
+
+    /// Unpatched `diode_new_config` called `.expect("ip:port")` on parse failure.
+    #[test]
+    fn repro_invalid_socket_address_returns_null_without_panic() {
+        let bad = CString::new("not-an-address").expect("cstring");
+        let ptr = unsafe { diode_new_config(bad.as_ptr(), 4096) };
+        assert!(ptr.is_null(), "invalid address must return null, not panic");
+        unsafe { diode_free_config(ptr) };
+    }
+
+    #[test]
+    fn repro_null_config_send_returns_zero() {
+        let path = CString::new("/no/such/file").expect("cstring");
+        let result = unsafe { diode_send_file(ptr::null_mut(), path.as_ptr()) };
+        assert_eq!(result, 0);
+    }
+
+    #[test]
+    fn repro_missing_file_send_returns_zero() {
+        let addr = CString::new("127.0.0.1:9999").expect("cstring");
+        let config = unsafe { diode_new_config(addr.as_ptr(), 4096) };
+        assert!(!config.is_null());
+
+        let path = CString::new("/no/such/file").expect("cstring");
+        let result = unsafe { diode_send_file(config, path.as_ptr()) };
+        assert_eq!(result, 0);
+
+        unsafe { diode_free_config(config) };
+    }
+
+    #[test]
+    fn repro_null_output_dir_receive_returns_zero() {
+        let addr = CString::new("127.0.0.1:9999").expect("cstring");
+        let config = unsafe { diode_new_config(addr.as_ptr(), 4096) };
+        assert!(!config.is_null());
+
+        let result = unsafe { diode_receive_files(config, ptr::null()) };
+        assert_eq!(result, 0);
+
+        unsafe { diode_free_config(config) };
+    }
+}
