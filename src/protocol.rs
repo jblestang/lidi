@@ -402,3 +402,69 @@ impl fmt::Display for Block {
         )
     }
 }
+
+#[cfg(test)]
+mod repro {
+    use super::{Block, Error, RaptorQ, ID_START};
+
+    fn test_raptorq() -> RaptorQ {
+        match RaptorQ::new(1500, 65_536, 10, 5) {
+            Ok(raptorq) => raptorq,
+            Err(error) => panic!("raptorq config: {error}"),
+        }
+    }
+
+    fn craft_block_with_claimed_payload_len(raptorq: &RaptorQ, claimed_len: u32) -> Block {
+        let mut bytes = vec![0u8; raptorq.transfer_length as usize];
+        bytes[4] = ID_START;
+        bytes[5..9].copy_from_slice(&claimed_len.to_le_bytes());
+        Block::deserialize(bytes)
+    }
+
+    /// Unpatched `payload()` indexes past the block buffer when `data_length` is forged.
+    #[test]
+    fn repro_oversized_payload_claim_panics_without_bounds_check() {
+        let raptorq = test_raptorq();
+        let claimed = u32::try_from(Block::max_data_len(&raptorq) + 1024).expect("claimed len");
+        let block_len = raptorq.transfer_length as usize;
+        let end = 9usize.saturating_add(claimed as usize);
+        let panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _ = &vec![0u8; block_len][9..end];
+        }));
+        assert!(panic.is_err(), "forged payload length must panic on unpatched slice");
+    }
+
+    #[test]
+    fn repro_oversized_payload_claim_returns_error() {
+        let raptorq = test_raptorq();
+        let claimed = u32::try_from(Block::max_data_len(&raptorq) + 1024).expect("claimed len");
+        let block = craft_block_with_claimed_payload_len(&raptorq, claimed);
+        match block.payload() {
+            Err(Error::Other(message)) if message.contains("payload out of bounds") => {}
+            Err(Error::InvalidPayloadLength { .. }) => {}
+            Ok(_) => panic!("expected payload extraction to fail"),
+            Err(other) => panic!("unexpected payload error: {other}"),
+        }
+    }
+
+    #[test]
+    fn repro_validate_rejects_oversized_payload_claim() {
+        let raptorq = test_raptorq();
+        let claimed = u32::try_from(Block::max_data_len(&raptorq) + 1024).expect("claimed len");
+        let block = craft_block_with_claimed_payload_len(&raptorq, claimed);
+        assert!(matches!(
+            block.validate(&raptorq),
+            Err(Error::InvalidPayloadLength { .. })
+        ));
+    }
+
+    #[test]
+    fn repro_validate_rejects_wrong_block_size() {
+        let raptorq = test_raptorq();
+        let block = Block::deserialize(vec![0u8; 32]);
+        assert!(matches!(
+            block.validate(&raptorq),
+            Err(Error::InvalidBlockSize { .. })
+        ));
+    }
+}
