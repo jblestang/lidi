@@ -32,6 +32,8 @@ mod dispatch;
 mod reblock;
 mod udp;
 
+pub(crate) const PIPELINE_QUEUE_DEPTH: usize = reblock::WINDOW_WIDTH as usize + 1;
+
 pub struct Config {
     pub from: net::SocketAddr,
     pub from_mtu: u16,
@@ -189,10 +191,13 @@ where
 
         let block_to_dispatch = (sync::Mutex::new(0), sync::Condvar::new());
 
-        let (to_reblock, for_reblock) = crossbeam_channel::unbounded();
-        let (to_decode, for_decode) = crossbeam_channel::unbounded();
-        let (to_dispatch, for_dispatch) = crossbeam_channel::unbounded();
-        let (to_clients, for_clients) = crossbeam_channel::unbounded();
+        let (to_reblock, for_reblock) = crossbeam_channel::bounded(PIPELINE_QUEUE_DEPTH);
+        let (to_decode, for_decode) = crossbeam_channel::bounded(PIPELINE_QUEUE_DEPTH);
+        let (to_dispatch, for_dispatch) = crossbeam_channel::bounded(PIPELINE_QUEUE_DEPTH);
+        let (to_clients, for_clients) =
+            crossbeam_channel::bounded(usize::try_from(config.max_clients).map_err(|e| {
+                Error::Other(format!("max_clients: {e}"))
+            })?);
 
         Ok(Self {
             config,
