@@ -80,6 +80,12 @@ where
 
     log::debug!("file name is {file_name:?}");
 
+    if file_name.len() > file::protocol::MAX_FILE_NAME_LEN {
+        return Err(file::Error::Diode(file::protocol::Error::InvalidFileNameLen(
+            file_name.len(),
+        )));
+    }
+
     let metadata = file.metadata()?;
     let permissions = metadata.permissions();
 

@@ -9,7 +9,10 @@ pub enum Error {
     StringFormatError(FromUtf8Error),
     InvalidFileSize(usize, usize),
     InvalidHash(u128, u128),
+    InvalidFileNameLen(usize),
 }
+
+pub const MAX_FILE_NAME_LEN: usize = 4096;
 
 impl fmt::Display for Error {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
@@ -18,6 +21,9 @@ impl fmt::Display for Error {
             Self::StringFormatError(e) => write!(fmt, "string format error: {e}"),
             Self::InvalidFileSize(s1, s2) => write!(fmt, "invalid file size: {s1} != {s2}"),
             Self::InvalidHash(h1, h2) => write!(fmt, "invalid hash: {h1:x} != {h2:x}"),
+            Self::InvalidFileNameLen(len) => {
+                write!(fmt, "invalid file name length: {len} > {MAX_FILE_NAME_LEN}")
+            }
         }
     }
 }
@@ -53,6 +59,9 @@ impl Header {
         let mut file_name_len = [0u8; 8];
         r.read_exact(&mut file_name_len)?;
         let file_name_len = usize::from_le_bytes(file_name_len);
+        if file_name_len > MAX_FILE_NAME_LEN {
+            return Err(Error::InvalidFileNameLen(file_name_len));
+        }
 
         let mut file_name = vec![0; file_name_len];
         r.read_exact(&mut file_name)?;
