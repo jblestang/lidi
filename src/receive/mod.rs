@@ -345,3 +345,35 @@ where
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod repro {
+    use super::PIPELINE_QUEUE_DEPTH;
+    use crossbeam_channel::TrySendError;
+
+    /// Unpatched master used `unbounded()` for pipeline and per-client queues, so a
+    /// fast sender could grow memory without backpressure.
+    #[test]
+    fn repro_bounded_pipeline_queue_applies_backpressure() {
+        let (tx, _rx) = crossbeam_channel::bounded::<()>(PIPELINE_QUEUE_DEPTH);
+        for _ in 0..PIPELINE_QUEUE_DEPTH {
+            tx.send(()).expect("queue not full yet");
+        }
+        assert!(
+            matches!(tx.try_send(()), Err(TrySendError::Full(_))),
+            "bounded queue must reject excess items"
+        );
+    }
+
+    #[test]
+    fn repro_unbounded_queue_accepts_unbounded_backlog() {
+        let (tx, _rx) = crossbeam_channel::unbounded::<()>();
+        for _ in 0..PIPELINE_QUEUE_DEPTH.saturating_mul(100) {
+            tx.send(()).expect("unbounded queue keeps growing");
+        }
+        assert!(
+            tx.try_send(()).is_ok(),
+            "unbounded queue never signals backpressure"
+        );
+    }
+}
