@@ -39,6 +39,16 @@ struct Args {
     from: net::SocketAddr,
 }
 
+fn resolve_diode_send(clients: &Clients) -> Option<aux::DiodeSend> {
+    if let Some(to_tcp) = clients.to_tcp {
+        Some(aux::DiodeSend::Tcp(to_tcp))
+    } else if let Some(to_unix) = clients.to_unix.as_ref() {
+        Some(aux::DiodeSend::Unix(to_unix.clone()))
+    } else {
+        None
+    }
+}
+
 fn main() {
     let args = Args::parse();
 
@@ -53,10 +63,8 @@ fn main() {
         env!("CARGO_PKG_VERSION")
     );
 
-    let diode = if let Some(to_tcp) = args.to.to_tcp {
-        aux::DiodeSend::Tcp(to_tcp)
-    } else if let Some(to_unix) = args.to.to_unix {
-        aux::DiodeSend::Unix(to_unix)
+    let diode = if let Some(diode) = resolve_diode_send(&args.to) {
+        diode
     } else {
         log::error!("missing TCP or Unix destination");
         return;
@@ -69,5 +77,19 @@ fn main() {
 
     if let Err(e) = aux::udp::send::send(&config, args.from) {
         log::error!("{e}");
+    }
+}
+
+#[cfg(test)]
+mod repro {
+    use super::*;
+
+    #[test]
+    fn repro_missing_destination_returns_none_without_panic() {
+        let clients = Clients {
+            to_tcp: None,
+            to_unix: None,
+        };
+        assert!(resolve_diode_send(&clients).is_none());
     }
 }
