@@ -9,7 +9,7 @@ pub fn start<C>(sender: &send::Sender<C>) -> Result<(), send::Error> {
             return Ok(());
         };
 
-        let client_id = block.client_id();
+        let client_id = block.client_id().map_err(send::Error::Protocol)?;
 
         let packets = sender.raptorq.encode(id, block.serialized());
 
