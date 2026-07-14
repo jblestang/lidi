@@ -83,6 +83,41 @@ impl Header {
     }
 }
 
+#[cfg(test)]
+mod repro {
+    use super::{Error, Header, MAX_FILE_NAME_LEN};
+    use std::io::Cursor;
+
+    fn craft_header_bytes(file_name_len: usize) -> Vec<u8> {
+        let mut bytes = file_name_len.to_le_bytes().to_vec();
+        bytes.extend(std::iter::repeat_n(b'a', file_name_len));
+        bytes.extend_from_slice(&0o644u32.to_le_bytes());
+        bytes.extend_from_slice(&0u64.to_le_bytes());
+        bytes
+    }
+
+    /// Unpatched master allocates `vec![0; file_name_len]` from attacker-controlled length.
+    #[test]
+    fn repro_huge_file_name_len_rejected() {
+        let huge_len = MAX_FILE_NAME_LEN + 1;
+        let mut cursor = Cursor::new(craft_header_bytes(huge_len));
+        let result = Header::deserialize_from(&mut cursor);
+        assert!(matches!(
+            result,
+            Err(Error::InvalidFileNameLen(len)) if len == huge_len
+        ));
+    }
+
+    #[test]
+    fn repro_max_file_name_len_still_accepted() {
+        let mut cursor = Cursor::new(craft_header_bytes(MAX_FILE_NAME_LEN));
+        match Header::deserialize_from(&mut cursor) {
+            Ok(header) => assert_eq!(header.file_name.len(), MAX_FILE_NAME_LEN),
+            Err(error) => panic!("max len should parse: {error}"),
+        }
+    }
+}
+
 pub(crate) struct Footer {
     pub(crate) hash: u128,
 }
